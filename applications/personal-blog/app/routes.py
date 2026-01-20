@@ -1,13 +1,50 @@
-from fastapi import APIRouter, Request
+from fastapi import Request, APIRouter
 from fastapi.templating import Jinja2Templates
-import os
 
 router = APIRouter()
-templates = Jinja2Templates(directory="/templates")
+templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/post/{post_name}")
-async def show_post(request: Request, post_name: str):
-    post_path = f"/posts/{post_name}.html"
-    if os.path.exists(post_path):
-        return templates.TemplateResponse(f"../posts/{post_name}.html", {"request":request})
-    return {"error":"Post not found"}
+posts = [
+    {
+        "title": "First post",
+        "slug": "first-post",
+        "date": "January 20, 2026",
+        "excerpt": "First post as preview",
+    },
+    {
+        "title": "Second post",
+        "slug": "second-post",
+        "date": "January 20, 2026",
+        "excerpt": "Second post as preview",
+    },
+    {
+        "title": "Third post",
+        "slug": "third-post",
+        "date": "January 20, 2026",
+        "excerpt": "Third post as preview",
+    },
+]
+
+@router.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "posts": posts},
+    )
+
+
+@router.get("/post/{slug}")
+async def post_detail(request: Request, slug: str):
+    post = next((p for p in posts if p["slug"] == slug), None)
+
+    if not post:
+        return templates.TemplateResponse(
+            "404.html",
+            {"request": request},
+            status_code=404,
+        )
+
+    return templates.TemplateResponse(
+        "post.html",
+        {"request": request, "post": post},
+    )
